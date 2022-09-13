@@ -29,4 +29,6 @@ assign(ROSLIB, require('./tf'));
 
 assign(ROSLIB, require('./urdf'));
 
+assign(ROSLIB, require('./action'));
+
 module.exports = ROSLIB;
