@@ -2706,6 +2706,8 @@ var assign = require('object-assign');
 // Add core components
 assign(ROSLIB, require('./core'));
 
+assign(ROSLIB, require('./action'));
+
 assign(ROSLIB, require('./actionlib'));
 
 assign(ROSLIB, require('./math'));
@@ -2714,7 +2716,7 @@ assign(ROSLIB, require('./tf'));
 
 assign(ROSLIB, require('./urdf'));
 
-assign(ROSLIB, require('./action'));
+
 
 module.exports = ROSLIB;
 
@@ -2768,14 +2770,18 @@ module.exports = ActionResult;
 var ActionGoal = require("./ActionGoal");
 var ActionResult = require("./ActionResult");
 var ActionFeedback = require("./ActionFeedback");
+var Service = require('../core/Service');
+var ServiceRequest = require('../core/ServiceRequest');
 var EventEmitter2 = require("eventemitter2").EventEmitter2;
 
 function ActionHandle(options) {
+  var that = this;
   options = options || {};
   this.ros = options.ros;
   this.name = options.name;
   this.actionType = options.actionType;
-  var that = this;
+  
+
   this._messageCallback = function (data) {
     if (data.return_type === "feedback") {
       that.emit("feedback", new ActionFeedback(data));
@@ -2783,8 +2789,9 @@ function ActionHandle(options) {
       that.emit("result", new ActionResult(data));
     }
   };
+
   this.on("feedback", function (msg) {
-    console.log("feedback", msg.values);
+    //console.log("feedback", msg.values);
     that.feedback = msg.values;
   })
   
@@ -2792,6 +2799,14 @@ function ActionHandle(options) {
     console.log("result", msg.values);
     that.status = msg.values;
   })
+
+  this.cancel = new Service({
+    ros : this.ros,
+    name : this.name + '/_action/cancel_goal',
+    messageType : 'action_msgs/srv/CancelGoal'
+  });
+
+
 }
 ActionHandle.prototype.__proto__ = EventEmitter2.prototype;
 /**
@@ -2813,27 +2828,46 @@ ActionHandle.prototype.createClient = function (
 ) {
   if (typeof callback === "function") {
     this.on("feedback" || "result", callback);
+    
   }
 
-  var actionClientId =
+  this.actionClientId =
     "create_client:" + this.name + ":" + ++this.ros.idCounter;
-  this.ros.on(actionClientId, this._messageCallback);
+  this.ros.on(this.actionClientId, this._messageCallback);
 
   var call = {
     op: "createClient",
-    id: actionClientId,
+    id: this.actionClientId,
     action_name: this.name,
     action_type: this.actionType,
     args: goal,
   };
   this.ros.callOnConnection(call);
+
+};
+
+ActionHandle.prototype.cancelGoal = function(uuid, sec, nanosec , callback){
+  var cancelMessage = new ServiceRequest({
+    goal_info: {
+      goal_id: {
+        uuid: uuid},
+      stamp: {
+        sec: sec,
+        nanosec:nanosec}
+    }
+  });
+  console.log("canceling goal", cancelMessage);
+  this.cancel.callService(cancelMessage, function(result) {
+    callback(result);
+    console.log("result of cancel", result)
+  });
 };
 
 
 
 module.exports = ActionHandle;
 
-},{"./ActionFeedback":10,"./ActionGoal":11,"./ActionResult":12,"eventemitter2":2}],14:[function(require,module,exports){
+},{"../core/Service":23,"../core/ServiceRequest":24,"./ActionFeedback":10,"./ActionGoal":11,"./ActionResult":12,"eventemitter2":2}],14:[function(require,module,exports){
 var Ros = require('../core/Ros');
 var mixin = require('../mixin');
 
@@ -3672,6 +3706,7 @@ Ros.prototype.sendEncodedMessage = function(messageEncoded) {
  * @param {Object} message - The message to be sent.
  */
 Ros.prototype.callOnConnection = function(message) {
+  console.log("call on connection");
   if (this.transportOptions.encoder) {
     this.transportOptions.encoder(message, this._sendFunc);
   } else {
@@ -4637,7 +4672,8 @@ Topic.prototype.subscribe = function(callback) {
     this.on('message', callback);
   }
 
-  if (this.subscribeId) { return; }
+  if (this.subscribeId) { 
+    return; }
   this.ros.on(this.name, this._messageCallback);
   this.subscribeId = 'subscribe:' + this.name + ':' + (++this.ros.idCounter);
 

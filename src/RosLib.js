@@ -21,6 +21,8 @@ var assign = require('object-assign');
 // Add core components
 assign(ROSLIB, require('./core'));
 
+assign(ROSLIB, require('./action'));
+
 assign(ROSLIB, require('./actionlib'));
 
 assign(ROSLIB, require('./math'));
@@ -29,6 +31,6 @@ assign(ROSLIB, require('./tf'));
 
 assign(ROSLIB, require('./urdf'));
 
-assign(ROSLIB, require('./action'));
+
 
 module.exports = ROSLIB;

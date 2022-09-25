@@ -93,7 +93,8 @@ Topic.prototype.subscribe = function(callback) {
     this.on('message', callback);
   }
 
-  if (this.subscribeId) { return; }
+  if (this.subscribeId) { 
+    return; }
   this.ros.on(this.name, this._messageCallback);
   this.subscribeId = 'subscribe:' + this.name + ':' + (++this.ros.idCounter);
 

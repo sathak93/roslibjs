@@ -42,28 +42,57 @@
       // First, we create a Service client with details of the service's name and service type.
       const addTwoIntsClient = new ROSLIB.ActionHandle({
         ros: ros,
-        name: "/fibonacci",
-        actionType: "action_tutorials_interfaces/action/Fibonacci",
+        name: "/navigate_to_pose",
+        actionType: "nav2_msgs/action/NavigateToPose",
       });
 
       // Then we create a Service Request. The object we pass in to ROSLIB.ServiceRequest matches the
       // fields defined in the rospy_tutorials AddTwoInts.srv file.
       const goal_msg = new ROSLIB.ActionGoal({
-        order: 7,
-      });
+        pose: { header:{
+          frame_id: 'map',
+          stamp: 'now'
+        },
+        pose:{
+        position: { x: -2.0, y: -0.5, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
+        }}
+        });
       console.log("jstep1");
       // Finally, we call the /add_two_ints service and get back the results in the callback. The result
       // is a ROSLIB.ServiceResponse object.
-      addTwoIntsClient.createClient(goal_msg, function (result) {
-        
-      });
+      addTwoIntsClient.createClient(goal_msg);
       console.log("jstep2");
       addTwoIntsClient.on("feedback", function (msg) {
         console.log("feedback", msg.values);
+      })
+
+      cancel_goal = function(){
+      addTwoIntsClient.cancelGoal([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 0, 0, function(result){
+        console.log("cancelling goal result==", result)
       });
-      // Advertising a Service
-      // ---------------------
-      console.log("jstep3");
+      }
+
+      
+      ros.getNodes(function(result){
+          console.log("nodelist===", result)
+      })
+      
+      ros.getParams(function(result){
+          console.log("nodelist===", result)
+      })
+
+      ros.getServices(function(result){
+          console.log("nodelist===", result)
+      })
+        
+      ros.getActionServers(function(result){
+          console.log("nodelist===", result)
+      })
+
+
+
+      
       // The Service object does double duty for both calling and advertising services
     </script>
   </head>
@@ -88,6 +117,13 @@
         Error in the backend!
       </p>
       <p id="closed" style="display: none">Connection closed.</p>
+
+      <button onclick="cancel_goal()">
+        cancel goal
+      </button>
+      <button onclick="getnode()">
+        Nodes
+      </button>
     </div>
   </body>
 </html>
