@@ -2780,12 +2780,12 @@ function ActionHandle(options) {
   this.ros = options.ros;
   this.name = options.name;
   this.actionType = options.actionType;
-  
+
 
   this._messageCallback = function (data) {
-    if (data.return_type === "feedback") {
+    if (data.response_type === "feedback") {
       that.emit("feedback", new ActionFeedback(data));
-    } else if (data.return_type === "result") {
+    } else if (data.response_type === "result" || "error") {
       that.emit("result", new ActionResult(data));
     }
   };
@@ -2794,16 +2794,16 @@ function ActionHandle(options) {
     //console.log("feedback", msg.values);
     that.feedback = msg.values;
   })
-  
+
   this.on("result", function (msg) {
-    console.log("result", msg.values);
+    console.log("result", msg);
     that.status = msg.values;
   })
 
   this.cancel = new Service({
-    ros : this.ros,
-    name : this.name + '/_action/cancel_goal',
-    messageType : 'action_msgs/srv/CancelGoal'
+    ros: this.ros,
+    name: this.name + '/_action/cancel_goal',
+    messageType: 'action_msgs/srv/CancelGoal'
   });
 
 
@@ -2828,7 +2828,6 @@ ActionHandle.prototype.createClient = function (
 ) {
   if (typeof callback === "function") {
     this.on("feedback" || "result", callback);
-    
   }
 
   this.actionClientId =
@@ -2836,34 +2835,34 @@ ActionHandle.prototype.createClient = function (
   this.ros.on(this.actionClientId, this._messageCallback);
 
   var call = {
-    op: "createClient",
+    op: "send_goal",
+    feedback: true,
     id: this.actionClientId,
     action_name: this.name,
     action_type: this.actionType,
-    args: goal,
+    goal_msg: goal,
+  };
+  this.ros.callOnConnection(call);
+};
+
+ActionHandle.prototype.destroyClient = function () {
+  var call = {
+    op: "destroy_client",
+    action_type: this.actionType,
   };
   this.ros.callOnConnection(call);
 
 };
 
-ActionHandle.prototype.cancelGoal = function(uuid, sec, nanosec , callback){
-  var cancelMessage = new ServiceRequest({
-    goal_info: {
-      goal_id: {
-        uuid: uuid},
-      stamp: {
-        sec: sec,
-        nanosec:nanosec}
-    }
-  });
-  console.log("canceling goal", cancelMessage);
-  this.cancel.callService(cancelMessage, function(result) {
-    callback(result);
-    console.log("result of cancel", result)
-  });
+ActionHandle.prototype.cancelGoal = function () {
+  var call = {
+    op: "cancel_goal",
+    action_type: this.actionType,
+    id: this.actionClientId,
+  };
+  this.ros.callOnConnection(call);
+
 };
-
-
 
 module.exports = ActionHandle;
 
@@ -3504,7 +3503,8 @@ Param.prototype.get = function(callback) {
   });
 
   paramClient.callService(request, function(result) {
-    var value = JSON.parse(result.value);
+    console.log("result of get param ", result.value)
+    var value = JSON.stringify(result.value);
     callback(value);
   });
 };
@@ -3899,6 +3899,114 @@ Ros.prototype.getServicesForType = function(serviceType, callback, failedCallbac
 };
 
 /**
+ * Retrieve the details of a ROS Action Goal.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Goal.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+Ros.prototype.getActionGoalDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_goal_details',
+    serviceType : 'rosapi/ActionGoalDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
+ * Retrieve the details of a ROS Action Feedback.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Feedback.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionFeedbackDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_feedback_details',
+    serviceType : 'rosapi/ActionFeedbackDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
+ * Retrieve the details of a ROS Action Result.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Resul.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionResultDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_result_details',
+    serviceType : 'rosapi/ActionResultDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
  * Retrieve the details of a ROS service request.
  *
  * @param {string} type - The type of the service.
@@ -4083,6 +4191,41 @@ Ros.prototype.getParams = function(callback, failedCallback) {
   }else{
     paramsClient.callService(request, function(result) {
       callback(result.names);
+    });
+  }
+};
+
+/**
+ * Retrieve the type of a ROS Action.
+ *
+ * @param {string} service - Name of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {string} callback.type - The type of the action.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionType = function(action, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_type',
+    serviceType : 'rosapi/ActionType'
+  });
+  var request = new ServiceRequest({
+    action: action
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result.type);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result.type);
     });
   }
 };
@@ -4484,6 +4627,8 @@ function SocketAdapter(client) {
       client.emit(message.id, message);
     } else if (message.op === 'call_service') {
       client.emit(message.service, message);
+    } else if (message.op === 'action_response') {
+      client.emit(message.id, message);
     } else if(message.op === 'status'){
       if(message.id){
         client.emit('status:'+message.id, message);

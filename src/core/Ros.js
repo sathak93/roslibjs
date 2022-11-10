@@ -345,6 +345,114 @@ Ros.prototype.getServicesForType = function(serviceType, callback, failedCallbac
 };
 
 /**
+ * Retrieve the details of a ROS Action Goal.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Goal.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+Ros.prototype.getActionGoalDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_goal_details',
+    serviceType : 'rosapi/ActionGoalDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
+ * Retrieve the details of a ROS Action Feedback.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Feedback.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionFeedbackDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_feedback_details',
+    serviceType : 'rosapi/ActionFeedbackDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
+ * Retrieve the details of a ROS Action Result.
+ *
+ * @param {string} type - The type of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {Object} callback.result - The result object with the following params:
+ * @param {string[]} callback.result.typedefs - An array containing the details of the Action Resul.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionResultDetails = function(type, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_result_details',
+    serviceType : 'rosapi/ActionResultDetails'
+  });
+  var request = new ServiceRequest({
+    type: type
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result);
+    });
+  }
+};
+
+/**
  * Retrieve the details of a ROS service request.
  *
  * @param {string} type - The type of the service.
@@ -529,6 +637,41 @@ Ros.prototype.getParams = function(callback, failedCallback) {
   }else{
     paramsClient.callService(request, function(result) {
       callback(result.names);
+    });
+  }
+};
+
+/**
+ * Retrieve the type of a ROS Action.
+ *
+ * @param {string} service - Name of the Action.
+ * @param {function} callback - Function with the following params:
+ * @param {string} callback.type - The type of the action.
+ * @param {function} [failedCallback] - The callback function when the service call failed with params:
+ * @param {string} failedCallback.error - The error message reported by ROS.
+ */
+ Ros.prototype.getActionType = function(action, callback, failedCallback) {
+  var actionTypeClient = new Service({
+    ros : this,
+    name : '/rosapi/action_type',
+    serviceType : 'rosapi/ActionType'
+  });
+  var request = new ServiceRequest({
+    action: action
+  });
+
+  if (typeof failedCallback === 'function'){
+    actionTypeClient.callService(request,
+      function(result) {
+        callback(result.type);
+      },
+      function(message){
+        failedCallback(message);
+      }
+    );
+  }else{
+    actionTypeClient.callService(request, function(result) {
+      callback(result.type);
     });
   }
 };

@@ -11,12 +11,12 @@ function ActionHandle(options) {
   this.ros = options.ros;
   this.name = options.name;
   this.actionType = options.actionType;
-  
+
 
   this._messageCallback = function (data) {
-    if (data.return_type === "feedback") {
+    if (data.response_type === "feedback") {
       that.emit("feedback", new ActionFeedback(data));
-    } else if (data.return_type === "result") {
+    } else if (data.response_type === "result" || "error") {
       that.emit("result", new ActionResult(data));
     }
   };
@@ -25,16 +25,16 @@ function ActionHandle(options) {
     //console.log("feedback", msg.values);
     that.feedback = msg.values;
   })
-  
+
   this.on("result", function (msg) {
-    console.log("result", msg.values);
+    console.log("result", msg);
     that.status = msg.values;
   })
 
   this.cancel = new Service({
-    ros : this.ros,
-    name : this.name + '/_action/cancel_goal',
-    messageType : 'action_msgs/srv/CancelGoal'
+    ros: this.ros,
+    name: this.name + '/_action/cancel_goal',
+    messageType: 'action_msgs/srv/CancelGoal'
   });
 
 
@@ -59,7 +59,6 @@ ActionHandle.prototype.createClient = function (
 ) {
   if (typeof callback === "function") {
     this.on("feedback" || "result", callback);
-    
   }
 
   this.actionClientId =
@@ -67,33 +66,33 @@ ActionHandle.prototype.createClient = function (
   this.ros.on(this.actionClientId, this._messageCallback);
 
   var call = {
-    op: "createClient",
+    op: "send_goal",
+    feedback: true,
     id: this.actionClientId,
     action_name: this.name,
     action_type: this.actionType,
-    args: goal,
+    goal_msg: goal,
+  };
+  this.ros.callOnConnection(call);
+};
+
+ActionHandle.prototype.destroyClient = function () {
+  var call = {
+    op: "destroy_client",
+    action_type: this.actionType,
   };
   this.ros.callOnConnection(call);
 
 };
 
-ActionHandle.prototype.cancelGoal = function(uuid, sec, nanosec , callback){
-  var cancelMessage = new ServiceRequest({
-    goal_info: {
-      goal_id: {
-        uuid: uuid},
-      stamp: {
-        sec: sec,
-        nanosec:nanosec}
-    }
-  });
-  console.log("canceling goal", cancelMessage);
-  this.cancel.callService(cancelMessage, function(result) {
-    callback(result);
-    console.log("result of cancel", result)
-  });
+ActionHandle.prototype.cancelGoal = function () {
+  var call = {
+    op: "cancel_goal",
+    action_type: this.actionType,
+    id: this.actionClientId,
+  };
+  this.ros.callOnConnection(call);
+
 };
-
-
 
 module.exports = ActionHandle;

@@ -46,8 +46,6 @@
         actionType: "nav2_msgs/action/NavigateToPose",
       });
 
-      // Then we create a Service Request. The object we pass in to ROSLIB.ServiceRequest matches the
-      // fields defined in the rospy_tutorials AddTwoInts.srv file.
       const goal_msg = new ROSLIB.ActionGoal({
         pose: { header:{
           frame_id: 'map',
@@ -58,40 +56,52 @@
         orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
         }}
         });
-      console.log("jstep1");
-      // Finally, we call the /add_two_ints service and get back the results in the callback. The result
-      // is a ROSLIB.ServiceResponse object.
-      addTwoIntsClient.createClient(goal_msg);
-      console.log("jstep2");
+
+      create = function(){
+        addTwoIntsClient.createClient(goal_msg);}
+
       addTwoIntsClient.on("feedback", function (msg) {
-        console.log("feedback", msg.values);
+        console.log("nav2 feedback", msg.values);
       })
 
+
+
+
       cancel_goal = function(){
-      addTwoIntsClient.cancelGoal([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 0, 0, function(result){
+      fiboclient.cancelGoal([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 0, 0, function(result){
         console.log("cancelling goal result==", result)
       });
       }
 
-      
-      ros.getNodes(function(result){
-          console.log("nodelist===", result)
-      })
-      
-      ros.getParams(function(result){
-          console.log("nodelist===", result)
+      cancelt = function(){
+        addTwoIntsClient.cancel(5);
+        console.log("cancel called through internal")
+      }
+
+      const fiboclient = new ROSLIB.ActionHandle({
+        ros: ros,
+        name: "/fibonacci",
+        actionType: "action_tutorials_interfaces/action/Fibonacci",
+      });
+
+      const fibogoal = new ROSLIB.ActionGoal({
+        order: 17
+        });
+
+      cancel_fibo = function(){
+        fiboclient.cancelg(5);
+        console.log("cancel called through internal")
+      }
+
+      fiboclient.on("feedback", function (msg) {
+        console.log("fibonacci feedback", msg.values);
       })
 
-      ros.getServices(function(result){
-          console.log("nodelist===", result)
-      })
-        
-      ros.getActionServers(function(result){
-          console.log("nodelist===", result)
-      })
-
-
-
+      cancel_goal = function(){
+      fiboclient.cancelGoal([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 0, 0, function(result){
+        console.log("cancelling goal result==", result)
+      });
+      }
       
       // The Service object does double duty for both calling and advertising services
     </script>
@@ -121,8 +131,20 @@
       <button onclick="cancel_goal()">
         cancel goal
       </button>
-      <button onclick="getnode()">
-        Nodes
+      <button onclick="addTwoIntsClient.cancelg(5);">
+        cancel trough internal
+      </button>
+      <button onclick="create()">
+        create
+      </button>
+      <button onclick="fiboclient.createClient(fibogoal)">
+        fibonacci
+      </button>
+      <button onclick="cancel_fibo();">
+        fibonacci_cancel
+      </button>
+      <button onclick="fiboclient.destroyClient();">
+        destroy fibonacci
       </button>
     </div>
   </body>
