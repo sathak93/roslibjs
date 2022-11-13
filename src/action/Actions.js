@@ -54,11 +54,14 @@ ActionHandle.prototype.__proto__ = EventEmitter2.prototype;
 ActionHandle.prototype.createClient = function (
   goal,
   callback,
-  failedCallback,
   feedbackCallback
 ) {
   if (typeof callback === "function") {
-    this.on("feedback" || "result", callback);
+    this.on("result", callback);
+  }
+
+  if (typeof feedbackCallback === "function") {
+    this.on("feedback", feedbackCallback);
   }
 
   this.actionClientId =
@@ -79,7 +82,7 @@ ActionHandle.prototype.createClient = function (
 ActionHandle.prototype.destroyClient = function () {
   var call = {
     op: "destroy_client",
-    action_type: this.actionType,
+    action_name: this.name,
   };
   this.ros.callOnConnection(call);
 
@@ -88,7 +91,7 @@ ActionHandle.prototype.destroyClient = function () {
 ActionHandle.prototype.cancelGoal = function () {
   var call = {
     op: "cancel_goal",
-    action_type: this.actionType,
+    action_name: this.name,
     id: this.actionClientId,
   };
   this.ros.callOnConnection(call);
