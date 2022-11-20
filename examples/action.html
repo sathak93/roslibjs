@@ -56,6 +56,50 @@
         orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
         }}
         });
+        
+        
+        const wayPointClient = new ROSLIB.ActionHandle({
+        ros: ros,
+        name: "/follow_waypoints",
+        actionType: "nav2_msgs/action/FollowWaypoints",
+      });
+      
+      const goal1 = {
+       header:{
+          frame_id: 'map',
+          stamp: 'now'
+        },
+        pose:{
+        position: { x: -1.0, y: -0.5, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
+        }}
+        
+        
+      const goal2 = { header:{
+          frame_id: 'map',
+          stamp: 'now'
+        },
+        pose:{
+        position: { x: 0.0, y: -0.5, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
+        }
+        }
+
+        const goal3 = { header:{
+          frame_id: 'map',
+          stamp: 'now'
+        },
+        pose:{
+        position: { x: 1.0, y: -0.5, z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 },
+        }
+        }
+      
+
+
+     const way_point = new ROSLIB.ActionGoal({poses: [goal1, goal2, goal3 ]} );
+
+     const way_point2 = new ROSLIB.ActionGoal({poses: [goal3, goal2, goal1 ]} );
 
       create = function(){
         addTwoIntsClient.createClient(goal_msg);}
@@ -83,25 +127,24 @@
         name: "/fibonacci",
         actionType: "action_tutorials_interfaces/action/Fibonacci",
       });
+      
+      const fiboclient1 = new ROSLIB.ActionHandle({
+        ros: ros,
+        name: "/fibonacci",
+        actionType: "action_tutorials_interfaces/action/Fibonacci",
+      });
 
       const fibogoal = new ROSLIB.ActionGoal({
         order: 17
         });
 
-      cancel_fibo = function(){
-        fiboclient.cancelg(5);
-        console.log("cancel called through internal")
-      }
+
 
       fiboclient.on("feedback", function (msg) {
         console.log("fibonacci feedback", msg.values);
       })
 
-      cancel_goal = function(){
-      fiboclient.cancelGoal([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], 0, 0, function(result){
-        console.log("cancelling goal result==", result)
-      });
-      }
+
       
       // The Service object does double duty for both calling and advertising services
     </script>
@@ -131,7 +174,7 @@
       <button onclick="cancel_goal()">
         cancel goal
       </button>
-      <button onclick="addTwoIntsClient.cancelg(5);">
+      <button onclick="addTwoIntsClient.cancelGoal();">
         cancel trough internal
       </button>
       <button onclick="create()">
@@ -140,11 +183,32 @@
       <button onclick="fiboclient.createClient(fibogoal)">
         fibonacci
       </button>
-      <button onclick="cancel_fibo();">
+      <button onclick="fiboclient.cancelGoal()">
         fibonacci_cancel
       </button>
       <button onclick="fiboclient.destroyClient();">
         destroy fibonacci
+      </button>
+      <button onclick="fiboclient1.createClient(fibogoal)">
+        fibonacci1
+      </button>
+      <button onclick="fiboclient1.cancelGoal()">
+        fibonacci_cancel1
+      </button>
+      <button onclick="fiboclient1.destroyClient();">
+        destroy fibonacci1
+      </button>
+      <button onclick="wayPointClient.createClient(way_point)">
+       waypoint
+      </button>
+      <button onclick="wayPointClient.createClient(way_point2)">
+        waypoint2
+       </button>
+      <button onclick="wayPointClient.cancelGoal()">
+        wapoint_cancel
+      </button>
+      <button onclick="wayPointClient.destroyClient();">
+        destroy waypoint 
       </button>
     </div>
   </body>
