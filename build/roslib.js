@@ -2706,7 +2706,7 @@ var assign = require('object-assign');
 // Add core components
 assign(ROSLIB, require('./core'));
 
-assign(ROSLIB, require('./action'));
+assign(ROSLIB, require('./ros2action'));
 
 assign(ROSLIB, require('./actionlib'));
 
@@ -2720,169 +2720,11 @@ assign(ROSLIB, require('./urdf'));
 
 module.exports = ROSLIB;
 
-},{"./action":14,"./actionlib":19,"./core":28,"./math":33,"./tf":36,"./urdf":48,"object-assign":3}],9:[function(require,module,exports){
+},{"./actionlib":14,"./core":23,"./math":28,"./ros2action":34,"./tf":36,"./urdf":48,"object-assign":3}],9:[function(require,module,exports){
 (function (global){(function (){
 global.ROSLIB = require('./RosLib');
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./RosLib":8}],10:[function(require,module,exports){
-var assign = require('object-assign');
-
-/**
- * A  ActionFeedback is the returned callback from the action call.
- *
- * @constructor
- * @param values - object matching the fields defined in the .action definition file
- */
-function ActionFeedback(values) {
-  assign(this, values);
-}
-
-module.exports = ActionFeedback;
-},{"object-assign":3}],11:[function(require,module,exports){
-var assign = require('object-assign');
-
-/**
- * A  ActionGoal is passed into the action call.
- *
- * @constructor
- * @param values - object matching the fields defined in the ..action definition file
- */
-function ActionGoal(values) {
-  assign(this, values);
-}
-
-module.exports = ActionGoal;
-},{"object-assign":3}],12:[function(require,module,exports){
-var assign = require('object-assign');
-
-/**
- * A  ActionResult is returned from the action call.
- *
- * @constructor
- * @param values - object matching the fields defined in the .action definition file
- */
-function ActionResult(values) {
-  assign(this, values);
-}
-
-module.exports = ActionResult;
-},{"object-assign":3}],13:[function(require,module,exports){
-var ActionGoal = require("./ActionGoal");
-var ActionResult = require("./ActionResult");
-var ActionFeedback = require("./ActionFeedback");
-var Service = require('../core/Service');
-var ServiceRequest = require('../core/ServiceRequest');
-var EventEmitter2 = require("eventemitter2").EventEmitter2;
-
-function ActionHandle(options) {
-  var that = this;
-  options = options || {};
-  this.ros = options.ros;
-  this.name = options.name;
-  this.actionType = options.actionType;
-
-
-  this._messageCallback = function (data) {
-    if (data.response_type === "feedback") {
-      that.emit("feedback", new ActionFeedback(data));
-    } else if (data.response_type === "result" || "error") {
-      that.emit("result", new ActionResult(data));
-    }
-  };
-
-  this.on("feedback", function (msg) {
-    //console.log("feedback", msg.values);
-    that.feedback = msg.values;
-  })
-
-  this.on("result", function (msg) {
-    console.log("result", msg);
-    that.status = msg.values;
-  })
-
-  this.cancel = new Service({
-    ros: this.ros,
-    name: this.name + '/_action/cancel_goal',
-    messageType: 'action_msgs/srv/CancelGoal'
-  });
-
-
-}
-ActionHandle.prototype.__proto__ = EventEmitter2.prototype;
-/**
- * Calls the service. Returns the service response in the
- * callback. Does nothing if this service is currently advertised.
- *
- * @param request - the ROSLIB.ServiceRequest to send
- * @param callback - function with params:
- *   * response - the response from the service request
- * @param failedCallback - the callback function when the service call failed (optional). Params:
- *   * error - the error message reported by ROS
- */
-
-ActionHandle.prototype.createClient = function (
-  goal,
-  callback,
-  feedbackCallback
-) {
-  if (typeof callback === "function") {
-    this.on("result", callback);
-  }
-
-  if (typeof feedbackCallback === "function") {
-    this.on("feedback", feedbackCallback);
-  }
-
-  this.actionClientId =
-    "create_client:" + this.name + ":" + ++this.ros.idCounter;
-  this.ros.on(this.actionClientId, this._messageCallback);
-
-  var call = {
-    op: "send_goal",
-    feedback: true,
-    id: this.actionClientId,
-    action_name: this.name,
-    action_type: this.actionType,
-    goal_msg: goal,
-  };
-  this.ros.callOnConnection(call);
-};
-
-ActionHandle.prototype.destroyClient = function () {
-  var call = {
-    op: "destroy_client",
-    action_name: this.name,
-  };
-  this.ros.callOnConnection(call);
-
-};
-
-ActionHandle.prototype.cancelGoal = function () {
-  var call = {
-    op: "cancel_goal",
-    action_name: this.name,
-    id: this.actionClientId,
-  };
-  this.ros.callOnConnection(call);
-
-};
-
-module.exports = ActionHandle;
-
-},{"../core/Service":23,"../core/ServiceRequest":24,"./ActionFeedback":10,"./ActionGoal":11,"./ActionResult":12,"eventemitter2":2}],14:[function(require,module,exports){
-var Ros = require('../core/Ros');
-var mixin = require('../mixin');
-
-var actionhandle = module.exports = {
-    ActionHandle: require('./Actions'),
-    ActionGoal: require('./ActionGoal'),
-    ActionResult: require('./ActionResult'),
-    ActionFeedback: require('./ActionFeedback')
-};
-
-mixin(Ros, ['Actions'], actionhandle);
-
-},{"../core/Ros":22,"../mixin":34,"./ActionFeedback":10,"./ActionGoal":11,"./ActionResult":12,"./Actions":13}],15:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Russell Toris - rctoris@wpi.edu
@@ -3030,7 +2872,7 @@ ActionClient.prototype.dispose = function() {
 
 module.exports = ActionClient;
 
-},{"../core/Message":20,"../core/Topic":27,"eventemitter2":2}],16:[function(require,module,exports){
+},{"../core/Message":15,"../core/Topic":22,"eventemitter2":2}],11:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Justin Young - justin@oodar.com.au
@@ -3115,7 +2957,7 @@ ActionListener.prototype.__proto__ = EventEmitter2.prototype;
 
 module.exports = ActionListener;
 
-},{"../core/Message":20,"../core/Topic":27,"eventemitter2":2}],17:[function(require,module,exports){
+},{"../core/Message":15,"../core/Topic":22,"eventemitter2":2}],12:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Russell Toris - rctoris@wpi.edu
@@ -3206,7 +3048,7 @@ Goal.prototype.cancel = function() {
 
 module.exports = Goal;
 
-},{"../core/Message":20,"eventemitter2":2}],18:[function(require,module,exports){
+},{"../core/Message":15,"eventemitter2":2}],13:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Laura Lindzey - lindzey@gmail.com
@@ -3433,7 +3275,7 @@ SimpleActionServer.prototype.setPreempted = function() {
 
 module.exports = SimpleActionServer;
 
-},{"../core/Message":20,"../core/Topic":27,"eventemitter2":2}],19:[function(require,module,exports){
+},{"../core/Message":15,"../core/Topic":22,"eventemitter2":2}],14:[function(require,module,exports){
 var Ros = require('../core/Ros');
 var mixin = require('../mixin');
 
@@ -3446,7 +3288,7 @@ var action = module.exports = {
 
 mixin(Ros, ['ActionClient', 'SimpleActionServer'], action);
 
-},{"../core/Ros":22,"../mixin":34,"./ActionClient":15,"./ActionListener":16,"./Goal":17,"./SimpleActionServer":18}],20:[function(require,module,exports){
+},{"../core/Ros":17,"../mixin":29,"./ActionClient":10,"./ActionListener":11,"./Goal":12,"./SimpleActionServer":13}],15:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - baalexander@gmail.com
@@ -3465,7 +3307,7 @@ function Message(values) {
 }
 
 module.exports = Message;
-},{"object-assign":3}],21:[function(require,module,exports){
+},{"object-assign":3}],16:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - baalexander@gmail.com
@@ -3554,7 +3396,7 @@ Param.prototype.delete = function(callback) {
 
 module.exports = Param;
 
-},{"./Service":23,"./ServiceRequest":24}],22:[function(require,module,exports){
+},{"./Service":18,"./ServiceRequest":19}],17:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - baalexander@gmail.com
@@ -4427,7 +4269,7 @@ Ros.prototype.getTopicsAndRawTypes = function(callback, failedCallback) {
 
 module.exports = Ros;
 
-},{"../util/workerSocket":54,"./Service":23,"./ServiceRequest":24,"./SocketAdapter.js":26,"eventemitter2":2,"object-assign":3,"ws":51}],23:[function(require,module,exports){
+},{"../util/workerSocket":54,"./Service":18,"./ServiceRequest":19,"./SocketAdapter.js":21,"eventemitter2":2,"object-assign":3,"ws":51}],18:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - baalexander@gmail.com
@@ -4552,7 +4394,7 @@ Service.prototype._serviceResponse = function(rosbridgeRequest) {
 
 module.exports = Service;
 
-},{"./ServiceRequest":24,"./ServiceResponse":25,"eventemitter2":2}],24:[function(require,module,exports){
+},{"./ServiceRequest":19,"./ServiceResponse":20,"eventemitter2":2}],19:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - balexander@willowgarage.com
@@ -4571,7 +4413,7 @@ function ServiceRequest(values) {
 }
 
 module.exports = ServiceRequest;
-},{"object-assign":3}],25:[function(require,module,exports){
+},{"object-assign":3}],20:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - balexander@willowgarage.com
@@ -4590,7 +4432,7 @@ function ServiceResponse(values) {
 }
 
 module.exports = ServiceResponse;
-},{"object-assign":3}],26:[function(require,module,exports){
+},{"object-assign":3}],21:[function(require,module,exports){
 /**
  * Socket event handling utilities for handling events on either
  * WebSocket and TCP sockets
@@ -4724,7 +4566,7 @@ function SocketAdapter(client) {
 
 module.exports = SocketAdapter;
 
-},{"../util/cborTypedArrayTags":49,"../util/decompressPng":53,"cbor-js":1}],27:[function(require,module,exports){
+},{"../util/cborTypedArrayTags":49,"../util/decompressPng":53,"cbor-js":1}],22:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Brandon Alexander - baalexander@gmail.com
@@ -4935,7 +4777,7 @@ Topic.prototype.publish = function(message) {
 
 module.exports = Topic;
 
-},{"./Message":20,"eventemitter2":2}],28:[function(require,module,exports){
+},{"./Message":15,"eventemitter2":2}],23:[function(require,module,exports){
 var mixin = require('../mixin');
 
 var core = module.exports = {
@@ -4950,7 +4792,7 @@ var core = module.exports = {
 
 mixin(core.Ros, ['Param', 'Service', 'Topic'], core);
 
-},{"../mixin":34,"./Message":20,"./Param":21,"./Ros":22,"./Service":23,"./ServiceRequest":24,"./ServiceResponse":25,"./Topic":27}],29:[function(require,module,exports){
+},{"../mixin":29,"./Message":15,"./Param":16,"./Ros":17,"./Service":18,"./ServiceRequest":19,"./ServiceResponse":20,"./Topic":22}],24:[function(require,module,exports){
 /**
  * @fileOverview
  * @author David Gossow - dgossow@willowgarage.com
@@ -5024,7 +4866,7 @@ Pose.prototype.getInverse = function() {
 
 module.exports = Pose;
 
-},{"./Quaternion":30,"./Vector3":32}],30:[function(require,module,exports){
+},{"./Quaternion":25,"./Vector3":27}],25:[function(require,module,exports){
 /**
  * @fileOverview
  * @author David Gossow - dgossow@willowgarage.com
@@ -5118,7 +4960,7 @@ Quaternion.prototype.clone = function() {
 
 module.exports = Quaternion;
 
-},{}],31:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 /**
  * @fileOverview
  * @author David Gossow - dgossow@willowgarage.com
@@ -5153,7 +4995,7 @@ Transform.prototype.clone = function() {
 
 module.exports = Transform;
 
-},{"./Quaternion":30,"./Vector3":32}],32:[function(require,module,exports){
+},{"./Quaternion":25,"./Vector3":27}],27:[function(require,module,exports){
 /**
  * @fileOverview
  * @author David Gossow - dgossow@willowgarage.com
@@ -5223,7 +5065,7 @@ Vector3.prototype.clone = function() {
 
 module.exports = Vector3;
 
-},{}],33:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 module.exports = {
     Pose: require('./Pose'),
     Quaternion: require('./Quaternion'),
@@ -5231,7 +5073,7 @@ module.exports = {
     Vector3: require('./Vector3')
 };
 
-},{"./Pose":29,"./Quaternion":30,"./Transform":31,"./Vector3":32}],34:[function(require,module,exports){
+},{"./Pose":24,"./Quaternion":25,"./Transform":26,"./Vector3":27}],29:[function(require,module,exports){
 /**
  * Mixin a feature to the core/Ros prototype.
  * For example, mixin(Ros, ['Topic'], {Topic: <Topic>})
@@ -5250,7 +5092,163 @@ module.exports = function(Ros, classes, features) {
     });
 };
 
-},{}],35:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
+var assign = require('object-assign');
+
+/**
+ * A  ActionFeedback is the returned callback from the action call.
+ *
+ * @constructor
+ * @param values - object matching the fields defined in the .action definition file
+ */
+function ActionFeedback(values) {
+  assign(this, values);
+}
+
+module.exports = ActionFeedback;
+},{"object-assign":3}],31:[function(require,module,exports){
+var assign = require('object-assign');
+
+/**
+ * A  ActionGoal is passed into the action call.
+ *
+ * @constructor
+ * @param values - object matching the fields defined in the ..action definition file
+ */
+function ActionGoal(values) {
+  assign(this, values);
+}
+
+module.exports = ActionGoal;
+},{"object-assign":3}],32:[function(require,module,exports){
+var assign = require('object-assign');
+
+/**
+ * A  ActionResult is returned from the action call.
+ *
+ * @constructor
+ * @param values - object matching the fields defined in the .action definition file
+ */
+function ActionResult(values) {
+  assign(this, values);
+}
+
+module.exports = ActionResult;
+},{"object-assign":3}],33:[function(require,module,exports){
+var ActionResult = require("./ActionResult");
+var ActionFeedback = require("./ActionFeedback");
+var Service = require('../core/Service');
+var EventEmitter2 = require("eventemitter2").EventEmitter2;
+
+function ActionHandle(options) {
+  var that = this;
+  options = options || {};
+  this.ros = options.ros;
+  this.name = options.name;
+  this.actionType = options.actionType;
+
+
+  this._messageCallback = function (data) {
+    if (data.response_type === "feedback") {
+      that.emit("feedback", new ActionFeedback(data));
+    } else if (data.response_type === "result" || "error") {
+      that.emit("result", new ActionResult(data));
+    }
+  };
+
+  this.on("feedback", function (msg) {
+    //console.log("feedback", msg.values);
+    that.feedback = msg.values;
+  })
+
+  this.on("result", function (msg) {
+    console.log("result", msg);
+    that.status = msg.values;
+  })
+
+  this.cancel = new Service({
+    ros: this.ros,
+    name: this.name + '/_action/cancel_goal',
+    messageType: 'action_msgs/srv/CancelGoal'
+  });
+
+
+}
+ActionHandle.prototype.__proto__ = EventEmitter2.prototype;
+/**
+ * Calls the service. Returns the service response in the
+ * callback. Does nothing if this service is currently advertised.
+ *
+ * @param request - the ROSLIB.ServiceRequest to send
+ * @param callback - function with params:
+ *   * response - the response from the service request
+ * @param failedCallback - the callback function when the service call failed (optional). Params:
+ *   * error - the error message reported by ROS
+ */
+
+ActionHandle.prototype.createClient = function (
+  goal,
+  callback,
+  feedbackCallback
+) {
+  if (typeof callback === "function") {
+    this.on("result", callback);
+  }
+
+  if (typeof feedbackCallback === "function") {
+    this.on("feedback", feedbackCallback);
+  }
+
+  this.actionClientId =
+    "create_client:" + this.name + ":" + ++this.ros.idCounter;
+  this.ros.on(this.actionClientId, this._messageCallback);
+
+  var call = {
+    op: "send_goal",
+    feedback: true,
+    id: this.actionClientId,
+    action_name: this.name,
+    action_type: this.actionType,
+    goal_msg: goal,
+  };
+  this.ros.callOnConnection(call);
+};
+
+ActionHandle.prototype.destroyClient = function () {
+  var call = {
+    op: "destroy_client",
+    action_name: this.name,
+  };
+  this.ros.callOnConnection(call);
+
+};
+
+ActionHandle.prototype.cancelGoal = function () {
+  var call = {
+    op: "cancel_goal",
+    action_name: this.name,
+    id: this.actionClientId,
+  };
+  this.ros.callOnConnection(call);
+
+};
+
+module.exports = ActionHandle;
+
+},{"../core/Service":18,"./ActionFeedback":30,"./ActionResult":32,"eventemitter2":2}],34:[function(require,module,exports){
+var Ros = require('../core/Ros');
+var mixin = require('../mixin');
+
+var actionhandle = module.exports = {
+    ActionHandle: require('./Actions'),
+    ActionGoal: require('./ActionGoal'),
+    ActionResult: require('./ActionResult'),
+    ActionFeedback: require('./ActionFeedback')
+};
+
+mixin(Ros, ['Actions'], actionhandle);
+
+},{"../core/Ros":17,"../mixin":29,"./ActionFeedback":30,"./ActionGoal":31,"./ActionResult":32,"./Actions":33}],35:[function(require,module,exports){
 /**
  * @fileOverview
  * @author David Gossow - dgossow@willowgarage.com
@@ -5484,7 +5482,7 @@ TFClient.prototype.dispose = function() {
 
 module.exports = TFClient;
 
-},{"../actionlib/ActionClient":15,"../actionlib/Goal":17,"../core/Service.js":23,"../core/ServiceRequest.js":24,"../core/Topic.js":27,"../math/Transform":31}],36:[function(require,module,exports){
+},{"../actionlib/ActionClient":10,"../actionlib/Goal":12,"../core/Service.js":18,"../core/ServiceRequest.js":19,"../core/Topic.js":22,"../math/Transform":26}],36:[function(require,module,exports){
 var Ros = require('../core/Ros');
 var mixin = require('../mixin');
 
@@ -5493,7 +5491,7 @@ var tf = module.exports = {
 };
 
 mixin(Ros, ['TFClient'], tf);
-},{"../core/Ros":22,"../mixin":34,"./TFClient":35}],37:[function(require,module,exports){
+},{"../core/Ros":17,"../mixin":29,"./TFClient":35}],37:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Benjamin Pitzer - ben.pitzer@gmail.com
@@ -5525,7 +5523,7 @@ function UrdfBox(options) {
 
 module.exports = UrdfBox;
 
-},{"../math/Vector3":32,"./UrdfTypes":46}],38:[function(require,module,exports){
+},{"../math/Vector3":27,"./UrdfTypes":46}],38:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Benjamin Pitzer - ben.pitzer@gmail.com
@@ -5667,7 +5665,7 @@ function UrdfJoint(options) {
 
 module.exports = UrdfJoint;
 
-},{"../math/Pose":29,"../math/Quaternion":30,"../math/Vector3":32}],41:[function(require,module,exports){
+},{"../math/Pose":24,"../math/Quaternion":25,"../math/Vector3":27}],41:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Benjamin Pitzer - ben.pitzer@gmail.com
@@ -5785,7 +5783,7 @@ function UrdfMesh(options) {
 
 module.exports = UrdfMesh;
 
-},{"../math/Vector3":32,"./UrdfTypes":46}],44:[function(require,module,exports){
+},{"../math/Vector3":27,"./UrdfTypes":46}],44:[function(require,module,exports){
 /**
  * @fileOverview
  * @author Benjamin Pitzer - ben.pitzer@gmail.com
@@ -6045,7 +6043,7 @@ function UrdfVisual(options) {
 
 module.exports = UrdfVisual;
 
-},{"../math/Pose":29,"../math/Quaternion":30,"../math/Vector3":32,"./UrdfBox":37,"./UrdfCylinder":39,"./UrdfMaterial":42,"./UrdfMesh":43,"./UrdfSphere":45}],48:[function(require,module,exports){
+},{"../math/Pose":24,"../math/Quaternion":25,"../math/Vector3":27,"./UrdfBox":37,"./UrdfCylinder":39,"./UrdfMaterial":42,"./UrdfMesh":43,"./UrdfSphere":45}],48:[function(require,module,exports){
 module.exports = require('object-assign')({
     UrdfBox: require('./UrdfBox'),
     UrdfColor: require('./UrdfColor'),

@@ -124,18 +124,18 @@
 
       const fiboclient = new ROSLIB.ActionHandle({
         ros: ros,
-        name: "/fibonacci",
+        name: "/robot1/fibonacci",
         actionType: "action_tutorials_interfaces/action/Fibonacci",
       });
       
       const fiboclient1 = new ROSLIB.ActionHandle({
         ros: ros,
-        name: "/fibonacci",
+        name: "/robot2/fibonacci",
         actionType: "action_tutorials_interfaces/action/Fibonacci",
       });
 
       const fibogoal = new ROSLIB.ActionGoal({
-        order: 17
+        order: 10
         });
 
 

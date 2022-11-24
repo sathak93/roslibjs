@@ -21,7 +21,7 @@ var assign = require('object-assign');
 // Add core components
 assign(ROSLIB, require('./core'));
 
-assign(ROSLIB, require('./action'));
+assign(ROSLIB, require('./ros2action'));
 
 assign(ROSLIB, require('./actionlib'));
 

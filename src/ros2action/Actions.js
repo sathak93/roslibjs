@@ -1,8 +1,6 @@
-var ActionGoal = require("./ActionGoal");
 var ActionResult = require("./ActionResult");
 var ActionFeedback = require("./ActionFeedback");
 var Service = require('../core/Service');
-var ServiceRequest = require('../core/ServiceRequest');
 var EventEmitter2 = require("eventemitter2").EventEmitter2;
 
 function ActionHandle(options) {
