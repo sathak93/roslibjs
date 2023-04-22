@@ -3348,7 +3348,6 @@ Param.prototype.get = function(callback) {
   });
 
   paramClient.callService(request, function(result) {
-    console.log("result of get param ", result.value)
     var value = JSON.stringify(result.value);
     callback(value);
   });
@@ -3551,7 +3550,6 @@ Ros.prototype.sendEncodedMessage = function(messageEncoded) {
  * @param {Object} message - The message to be sent.
  */
 Ros.prototype.callOnConnection = function(message) {
-  console.log("call on connection");
   if (this.transportOptions.encoder) {
     this.transportOptions.encoder(message, this._sendFunc);
   } else {
@@ -5157,12 +5155,10 @@ function ActionHandle(options) {
   };
 
   this.on("feedback", function (msg) {
-    //console.log("feedback", msg.values);
     that.feedback = msg.values;
   })
 
   this.on("result", function (msg) {
-    console.log("result", msg);
     that.status = msg.values;
   })
 

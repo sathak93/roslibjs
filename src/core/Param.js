@@ -38,7 +38,6 @@ Param.prototype.get = function(callback) {
   });
 
   paramClient.callService(request, function(result) {
-    console.log("result of get param ", result.value)
     var value = JSON.stringify(result.value);
     callback(value);
   });
