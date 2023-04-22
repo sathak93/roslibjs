@@ -1,3 +1,5 @@
+**NOTE** (April 2023): This [PRL fork of `roslibjs`](https://github.com/personalrobotics/roslibjs), and the corresponding [PRL fork of `rosbridge_suite`](https://github.com/personalrobotics/rosbridge_suite), is to account for the fact that the [official `rosbridge_suite`](https://github.com/RobotWebTools/rosbridge_suite) and [official `roslibjs`](https://github.com/RobotWebTools/roslibjs) do not currently work with ROS2 actions. [This is a PR to address that](https://github.com/RobotWebTools/rosbridge_suite/pull/813), and it formed the basis for these two PRL forks. If ROS2 action support is added to both `rosbridge_suite` and `roslibjs`, then these two PRL forks can be removed (and any code that uses them, like the [PRL `feeding_web_interface`](https://github.com/personalrobotics/feeding_web_interface), updated).
+
 # roslibjs
 
 [![CI](https://github.com/RobotWebTools/roslibjs/actions/workflows/main.yml/badge.svg)](https://github.com/RobotWebTools/roslibjs/actions/workflows/main.yml)
