@@ -20,12 +20,10 @@ function ActionHandle(options) {
   };
 
   this.on("feedback", function (msg) {
-    //console.log("feedback", msg.values);
     that.feedback = msg.values;
   })
 
   this.on("result", function (msg) {
-    console.log("result", msg);
     that.status = msg.values;
   })
 
